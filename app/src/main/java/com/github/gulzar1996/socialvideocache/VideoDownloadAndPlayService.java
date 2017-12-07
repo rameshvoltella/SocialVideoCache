@@ -20,7 +20,7 @@ public class VideoDownloadAndPlayService {
     private static final String IP_OF_SERVER = "127.0.0.1";
     public static String ID;
     private static final String CACHE_PATH = Environment.getExternalStorageDirectory().getPath() + "/SocialCopsVideo/";
-
+    public static VideoDownloaderPR mVideoDownloader;
     private VideoDownloadAndPlayService(LocalFileStreamingServer server)
     {
         this.server = server;
@@ -38,8 +38,10 @@ public class VideoDownloadAndPlayService {
         //Get uid from video
         ID = getUID(videoUrl);
         //If the video file is in cache then we dont have to download
-        if(!checkFileinCache(activity))
-        new VideoDownloader(activity,ID).execute(videoUrl, CACHE_PATH+ID);
+        if(!checkFileinCache(activity)){
+            mVideoDownloader = new VideoDownloaderPR(activity,videoUrl,ID);
+            mVideoDownloader.init();
+        }
         server = new LocalFileStreamingServer(getFilefromCache(),checkFileinCache(activity),activity,ID);
 
         server.setSupportPlayWhileDownloading(true);

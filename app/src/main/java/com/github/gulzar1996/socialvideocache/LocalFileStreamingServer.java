@@ -296,20 +296,20 @@ public class LocalFileStreamingServer implements Runnable
                 if (supportPlayWhileDownloading)
                 {
                     // Check if data is ready
-                    while (!VideoDownloader.isDataReady())
+                    while (!VideoDownloaderPR.isDataReady())
                     {
-                        if (VideoDownloader.dataStatus == VideoDownloader.DATA_READY)
+                        if (VideoDownloaderPR.dataStatus == VideoDownloaderPR.DATA_READY)
                         {
-                            Log.e(TAG, "error in reading bytess**********(Data ready)");
+
                             break;
-                        } else if (VideoDownloader.dataStatus == VideoDownloader.DATA_CONSUMED)
+                        } else if (VideoDownloaderPR.dataStatus == VideoDownloaderPR.DATA_CONSUMED)
                         {
                             Log.e(TAG, "error in reading bytess**********(All Data consumed)");
                             break;
-                        } else if (VideoDownloader.dataStatus == VideoDownloader.DATA_NOT_READY)
+                        } else if (VideoDownloaderPR.dataStatus == VideoDownloaderPR.DATA_NOT_READY)
                         {
                             Log.e(TAG, "error in reading bytess**********(Data not ready)");
-                        } else if (VideoDownloader.dataStatus == VideoDownloader.DATA_NOT_AVAILABLE)
+                        } else if (VideoDownloaderPR.dataStatus == VideoDownloaderPR.DATA_NOT_AVAILABLE)
                         {
                             Log.e(TAG, "error in reading bytess**********(Data not available)");
                         }
@@ -343,7 +343,7 @@ public class LocalFileStreamingServer implements Runnable
                 cbSentThisBatch += cbRead;
 
                 if(supportPlayWhileDownloading)
-                    VideoDownloader.consumedb += cbRead;
+                    VideoDownloaderPR.consumedb += cbRead;
             }
             Log.e(TAG, "cbSentThisBatch: " + cbSentThisBatch);
             // If we did nothing this batch, block for a second
