@@ -35,7 +35,7 @@ public class LocalFileStreamingServer implements Runnable
     private long cbSkip;
     private boolean seekRequest;
     private boolean isFileCached ;
-    private File mMovieFile;
+    private File mVideoFile;
     private String mID;
     private Activity mActivity;
     private boolean supportPlayWhileDownloading = false;
@@ -46,7 +46,7 @@ public class LocalFileStreamingServer implements Runnable
 
     public LocalFileStreamingServer(File file, boolean isFileCached, Activity activity, String ID)
     {
-        mMovieFile = file;
+        mVideoFile = file;
         this.isFileCached=isFileCached;
         this.mActivity = activity;
         mID=ID;
@@ -93,7 +93,7 @@ public class LocalFileStreamingServer implements Runnable
     public String getFileUrl()
     {
         return "http://" + socket.getInetAddress().getHostAddress() + ":"
-                + port + "/" + mMovieFile.getName();
+                + port + "/" + mVideoFile.getName();
     }
 
     /**
@@ -154,7 +154,7 @@ public class LocalFileStreamingServer implements Runnable
                 }
                 Log.e(TAG, "client connected at " + port);
                 ExternalResourceDataSource data = new ExternalResourceDataSource(
-                        mMovieFile);
+                        mVideoFile);
                 Log.e(TAG, "processing request...");
                     processRequest(data, client);
             } catch (SocketTimeoutException e)
@@ -515,7 +515,7 @@ public class LocalFileStreamingServer implements Runnable
         public ExternalResourceDataSource(File resource)
         {
             movieResource = new File( mActivity.getCacheDir(),mID );
-            Log.e(TAG, "respurcePath is: " + mMovieFile.getPath());
+            Log.e(TAG, "respurcePath is: " + mVideoFile.getPath());
         }
 
         /**
