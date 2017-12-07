@@ -1,5 +1,6 @@
 package com.github.gulzar1996.socialvideocache;
 
+import android.app.Activity;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -33,16 +34,22 @@ public class LocalFileStreamingServer implements Runnable
     private Thread thread;
     private long cbSkip;
     private boolean seekRequest;
+    private boolean isFileCached ;
     private File mMovieFile;
-
+    private String mID;
+    private Activity mActivity;
     private boolean supportPlayWhileDownloading = false;
 
     /**
      * This server accepts HTTP request and returns files from device.
      */
-    public LocalFileStreamingServer(File file)
+
+    public LocalFileStreamingServer(File file, boolean isFileCached, Activity activity, String ID)
     {
         mMovieFile = file;
+        this.isFileCached=isFileCached;
+        this.mActivity = activity;
+        mID=ID;
     }
 
     /**
@@ -149,7 +156,7 @@ public class LocalFileStreamingServer implements Runnable
                 ExternalResourceDataSource data = new ExternalResourceDataSource(
                         mMovieFile);
                 Log.e(TAG, "processing request...");
-                processRequest(data, client);
+                    processRequest(data, client);
             } catch (SocketTimeoutException e)
             {
                 Log.e(TAG, "No client connected, waiting for client...", e);
@@ -162,6 +169,7 @@ public class LocalFileStreamingServer implements Runnable
         }
         Log.e(TAG, "Server interrupted or stopped. Shutting down.");
     }
+
 
     /**
      * Find byte index separating header from body. It must be the last byte of
@@ -283,6 +291,8 @@ public class LocalFileStreamingServer implements Runnable
             int cbSentThisBatch = 0;
             while (isRunning)
             {
+                //Okay so if the file is not cached then we hav to download the video using async else we will copy from the location
+                if (!isFileCached)
                 if (supportPlayWhileDownloading)
                 {
                     // Check if data is ready
@@ -504,7 +514,7 @@ public class LocalFileStreamingServer implements Runnable
 
         public ExternalResourceDataSource(File resource)
         {
-            movieResource = resource;
+            movieResource = new File( mActivity.getCacheDir(),mID );
             Log.e(TAG, "respurcePath is: " + mMovieFile.getPath());
         }
 
