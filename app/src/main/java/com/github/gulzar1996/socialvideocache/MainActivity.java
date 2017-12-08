@@ -1,59 +1,100 @@
 package com.github.gulzar1996.socialvideocache;
 
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.media.MediaPlayer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ProgressBar;
+import android.widget.SeekBar;
 import android.widget.Toast;
 import android.widget.VideoView;
 
-import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.source.ExtractorMediaSource;
-import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
-import com.google.android.exoplayer2.upstream.BandwidthMeter;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSourceFactory;
-import com.google.android.exoplayer2.util.Util;
+
+import com.afollestad.materialdialogs.DialogAction;
+import com.afollestad.materialdialogs.MaterialDialog;
 
 import java.io.File;
 
 public class MainActivity extends AppCompatActivity {
 
 
-    SimpleExoPlayerView simpleExoPlayerView;
-    private SimpleExoPlayer player;
+
+    VideoView simpleExoPlayerView;
+    public int stopPosition ;
     VideoDownloadAndPlayService videoService;
-    private DefaultTrackSelector trackSelector;
-    private BandwidthMeter bandwidthMeter;
-    private boolean shouldAutoPlay;
+    SeekBar progressBar;
+    ProgressBar initialLoding;
+    Button changeButton;
+    private final VideoProgressUpdater updater = new VideoProgressUpdater();
     private String videoPath="https://socialcops.com/images/old/spec/home/header-img-background_video-1920-480.mp4";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        bandwidthMeter = new DefaultBandwidthMeter();
-        shouldAutoPlay = true;
+        simpleExoPlayerView = findViewById(R.id.videoView);
+        progressBar=findViewById(R.id.progressBar);
+        changeButton=findViewById(R.id.changeButton);
+        progressBar.setVisibility(View.INVISIBLE);
+        initialLoding=findViewById(R.id.initialLoding);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            progressBar.setSecondaryProgressTintList(ColorStateList.valueOf(Color.WHITE));
+        }
         startProxy();
+        changeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openDialog();
+            }
+        });
     }
 
     private void startProxy() {
-//
+
         videoService = VideoDownloadAndPlayService.startServer(this, videoPath, new VideoDownloadAndPlayService.VideoStreamInterface()
         {
             @Override
-            public void onServerStart(String videoStreamUrl)
+            public void onServerStart(String proxyUrl)
             {
-                Toast.makeText(MainActivity.this, videoStreamUrl, Toast.LENGTH_SHORT).show();
-                MediaSource mediaSource = buildMediaSource(Uri.parse(videoStreamUrl));
-                player.prepare(mediaSource);
+                simpleExoPlayerView.setVideoPath(proxyUrl);
+                simpleExoPlayerView.start();
+                simpleExoPlayerView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(MediaPlayer mediaPlayer) {
+                        progressBar.setVisibility(View.VISIBLE);
+                        initialLoding.setVisibility(View.INVISIBLE);
+                        simpleExoPlayerView.setVisibility(View.VISIBLE);
+
+                        progressBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                            @Override
+                            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+
+                            }
+
+                            @Override
+                            public void onStartTrackingTouch(SeekBar seekBar) {
+
+                            }
+
+                            @Override
+                            public void onStopTrackingTouch(SeekBar seekBar) {
+                                int videoPosition = simpleExoPlayerView.getDuration() * progressBar.getProgress() / 100;
+                                simpleExoPlayerView.seekTo(videoPosition);
+                                simpleExoPlayerView.start();
+                            }
+                        });
+                    }
+                });
 
             }
         });
@@ -61,76 +102,87 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    private void releasePlayer() {
-        if (player != null) {
-            shouldAutoPlay = player.getPlayWhenReady();
-            player.release();
-            player = null;
-            trackSelector = null;
+    @Override
+    public void onPause() {
+        super.onPause();
+        if (simpleExoPlayerView!=null && simpleExoPlayerView.isPlaying())
+        {
+            stopPosition=simpleExoPlayerView.getCurrentPosition();
+            simpleExoPlayerView.pause();
+        }
+        updater.stop();
+
+    }
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (simpleExoPlayerView!=null){
+            simpleExoPlayerView.seekTo(stopPosition);
+            simpleExoPlayerView.start();}
+        updater.start();
+    }
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        simpleExoPlayerView.stopPlayback();
+    }
+
+    private final class VideoProgressUpdater extends Handler {
+
+        public void start() {
+            sendEmptyMessage(0);
+        }
+
+        public void stop() {
+            removeMessages(0);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            updateVideoProgress();
+            sendEmptyMessageDelayed(0, 500);
+        }
+    }
+    private void updateVideoProgress() {
+        int videoProgress = simpleExoPlayerView.getCurrentPosition() * 100 / simpleExoPlayerView.getDuration();
+        progressBar.setProgress(videoProgress);
+    }
+    private void stopProxy()
+    {
+        if(videoService != null){
+            videoService.stop();
+            videoService=null;
         }
     }
 
 
-
-    private void initializePlayer() {
-
-        simpleExoPlayerView = (SimpleExoPlayerView) findViewById(R.id.videoView);
-        simpleExoPlayerView.requestFocus();
-
-        TrackSelection.Factory videoTrackSelectionFactory =
-                new AdaptiveTrackSelection.Factory(bandwidthMeter);
-
-        trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
-
-        player = ExoPlayerFactory.newSimpleInstance(this, trackSelector);
-
-        simpleExoPlayerView.setPlayer(player);
-
-        player.setPlayWhenReady(shouldAutoPlay);
-/*        MediaSource mediaSource = new HlsMediaSource(Uri.parse("https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8"),
-                mediaDataSourceFactory, mainHandler, null);*/
-
-        DefaultExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
-
-
-
-    }
     @Override
     public void onStop()
     {
         super.onStop();
-        if(videoService != null)
-            videoService.stop();
-        if (Util.SDK_INT > 23) {
-            releasePlayer();
-        }
-    }
-    @Override
-    public void onPause() {
-        super.onPause();
-        if (Util.SDK_INT <= 23) {
-            releasePlayer();
-        }
+        stopProxy();
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-        if ((Util.SDK_INT <= 23 || player == null)) {
-            initializePlayer();
-        }
-    }
-    @Override
-    public void onStart() {
-        super.onStart();
-        if (Util.SDK_INT > 23) {
-            initializePlayer();
-        }
+    private void openDialog() {
+        new MaterialDialog.Builder(this)
+                .title("Change Video")
+                .inputType(InputType.TYPE_TEXT_VARIATION_URI)
+                .positiveText("Change")
+                .alwaysCallInputCallback() // this forces the callback to be invoked with every input change
+                .input(0, 0, false, new MaterialDialog.InputCallback() {
+                    @Override
+                    public void onInput(@NonNull MaterialDialog dialog, CharSequence input) {
+                        videoPath = input.toString();
+                    }
+                })
+                .onPositive(new MaterialDialog.SingleButtonCallback() {
+                    @Override
+                    public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+                        stopProxy();
+                        startProxy();
+                    }
+                })
+                .show();
     }
 
-    private MediaSource buildMediaSource(Uri uri) {
-        return new ExtractorMediaSource(uri,
-                new DefaultHttpDataSourceFactory("ua"),
-                new DefaultExtractorsFactory(), null, null);
-    }
 }
