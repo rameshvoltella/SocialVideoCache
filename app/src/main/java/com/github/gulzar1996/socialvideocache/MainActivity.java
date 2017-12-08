@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity implements CacheListener {
         simpleExoPlayerView.setVisibility(View.VISIBLE);
         Log.d("PROXYCACHE", "Use proxy url " + proxyUrl + " instead of original url " + videoPath);
         simpleExoPlayerView.setVideoPath( proxy.getProxyUrl(videoPath));
-
+        simpleExoPlayerView.start();
 
         simpleExoPlayerView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
@@ -178,7 +178,6 @@ public class MainActivity extends AppCompatActivity implements CacheListener {
     @Override
     public void onCacheAvailable(File cacheFile, String url, int percentsAvailable) {
         progressBar.setSecondaryProgress(percentsAvailable);
-        simpleExoPlayerView.start();
     }
 
     @Override
