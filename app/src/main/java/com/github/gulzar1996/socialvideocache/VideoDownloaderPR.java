@@ -22,7 +22,6 @@ import java.io.Console;
 public class VideoDownloaderPR {
 
     private Activity mActivity;
-    public static Boolean isDownloading;
     public String mVideourl;
     public String mID;
 
@@ -40,7 +39,6 @@ public class VideoDownloaderPR {
         mActivity=activity;
         mVideourl=Videourl;
         mID=ID;
-        isDownloading=false;
     }
 
     public static boolean isDataReady() {
@@ -64,7 +62,7 @@ public class VideoDownloaderPR {
 
     public void init()
     {
-        if (isFileDownloaded()) {
+        if (!isFileDownloaded()) {
             PRDownloaderConfig config = PRDownloaderConfig.newBuilder()
                     .setConnectTimeout(100000)
                     .setDatabaseEnabled(true)
@@ -86,21 +84,17 @@ public class VideoDownloaderPR {
                             readb = (int) progress.currentBytes;
                             fileLength = (int) progress.totalBytes;
                             Log.i("download", (readb / 1024) + "kb of " + (fileLength / 1024) + "kb");
-                            isDownloading = true;
                         }
                     })
                     .start(new OnDownloadListener() {
                         @Override
                         public void onDownloadComplete() {
-                            isDownloading=false;
-
                             SharedPreferenceUtils.getInstance(mActivity).setValue(mID, true);
                             Toast.makeText(mActivity, "Buffer Completed", Toast.LENGTH_SHORT).show();
                         }
 
                         @Override
                         public void onError(Error error) {
-                            isDownloading=false;
                             Toast.makeText(mActivity, "Error " + error.toString(), Toast.LENGTH_SHORT).show();
                         }
                     });
