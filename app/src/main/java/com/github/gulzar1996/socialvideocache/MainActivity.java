@@ -105,16 +105,17 @@ public class MainActivity extends AppCompatActivity implements CacheListener {
         initialLoding.setVisibility(View.VISIBLE);
         simpleExoPlayerView.setVisibility(View.VISIBLE);
         Log.d("PROXYCACHE", "Use proxy url " + proxyUrl + " instead of original url " + videoPath);
-        simpleExoPlayerView.setVideoPath(proxyUrl);
+        simpleExoPlayerView.setVideoPath( proxy.getProxyUrl(videoPath));
 
 
         simpleExoPlayerView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mediaPlayer) {
+
                 progressBar.setVisibility(View.VISIBLE);
                 initialLoding.setVisibility(View.INVISIBLE);
                 simpleExoPlayerView.setVisibility(View.VISIBLE);
-                simpleExoPlayerView.start();
+
                 progressBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                     @Override
                     public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
@@ -140,19 +141,7 @@ public class MainActivity extends AppCompatActivity implements CacheListener {
     }
 
 
-    private void startProxy() {
-//
-        videoService = VideoDownloadAndPlayService.startServer(this, videoPath, new VideoDownloadAndPlayService.VideoStreamInterface()
-        {
-            @Override
-            public void onServerStart(String videoStreamUrl)
-            {
-                Toast.makeText(MainActivity.this, videoStreamUrl, Toast.LENGTH_SHORT).show();
-            }
-        });
 
-
-    }
 
 
     @Override
@@ -189,6 +178,7 @@ public class MainActivity extends AppCompatActivity implements CacheListener {
     @Override
     public void onCacheAvailable(File cacheFile, String url, int percentsAvailable) {
         progressBar.setSecondaryProgress(percentsAvailable);
+        simpleExoPlayerView.start();
     }
 
     @Override
