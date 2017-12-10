@@ -11,3 +11,7 @@ it can be used for offline viewing.
  Video is downloaded using AsyncTask. Socket is used to generate a proxy url from mobile storage so that the media player/exoplayer can parse and display video simultaneously
  when the video is completely buffered it can be used later for offline viewing as the video will be available on the disk.It currently works for mp4 videos of fixed size length
  
+ 
+ ScreenShot
+================  
+ ![](screenshot.gif)
